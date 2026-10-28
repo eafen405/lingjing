@@ -55,6 +55,10 @@ public class PlayerControllerX : MonoBehaviour
         // if player collides with money, fireworks
         else if (other.gameObject.CompareTag("Money"))
         {
+            // The fireworks are a child object of the player, so they have to
+            // be placed on the balloon before they are played, otherwise they
+            // show up next to the balloon.
+            fireworksParticle.transform.position = transform.position;
             fireworksParticle.Play();
             playerAudio.PlayOneShot(moneySound, 1.0f);
             Destroy(other.gameObject);
