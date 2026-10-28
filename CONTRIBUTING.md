@@ -17,6 +17,11 @@
 4. **提 PR 合并到 main**，PR 里勾选验收项，并引用对应 issue（`Closes #3`）。
 5. **绝不重写已推送的历史**。评分要求是"保留真实开发历史"，force-push 会让它看起来像事后编造。
 
+多个交付物并行开发时，ticket 分支先合进集成分支 `integration/phase-1`，集成分支再整体合进 `main`。
+合并提交用 `merge(<范围>): <说明>` 的写法，例如 `merge(challenge-3): integrate the Balloons ticket`——
+它不是 Conventional Commits 的标准 type，但合并提交本来就不是某一个作者写的，
+统一成一种写法便于阅读。
+
 ## 提交纪律
 
 - 一次提交只包含一个逻辑变更；不要把"下载素材 + 改脚本 + 加文档"混在一起。

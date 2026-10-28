@@ -21,6 +21,49 @@ using UnityEngine;
 /// </summary>
 public static class MeasureTools
 {
+    /// <summary>
+    /// The merged bounds of the renderers below <paramref name="root"/>, expressed
+    /// in the root's local space.
+    ///
+    /// The corners of every renderer's world space bounding box are transformed
+    /// one by one: a root that carries a rotation cannot be handled by taking
+    /// the world AABB apart, that would give a negative size.
+    /// </summary>
+    public static Bounds GetLocalModelBounds(GameObject instance, Transform root)
+    {
+        var renderers = instance.GetComponentsInChildren<Renderer>(true);
+        Vector3 localMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+        Vector3 localMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+        bool any = false;
+
+        foreach (var renderer in renderers)
+        {
+            Bounds r = renderer.bounds;
+            any = true;
+            for (int xi = -1; xi <= 1; xi += 2)
+            {
+                for (int yi = -1; yi <= 1; yi += 2)
+                {
+                    for (int zi = -1; zi <= 1; zi += 2)
+                    {
+                        Vector3 corner = root.InverseTransformPoint(r.center + Vector3.Scale(r.extents, new Vector3(xi, yi, zi)));
+                        localMin = Vector3.Min(localMin, corner);
+                        localMax = Vector3.Max(localMax, corner);
+                    }
+                }
+            }
+        }
+
+        if (!any)
+        {
+            return new Bounds(Vector3.zero, Vector3.zero);
+        }
+
+        Bounds bounds = new Bounds();
+        bounds.SetMinMax(localMin, localMax);
+        return bounds;
+    }
+
     public static void Measure()
     {
         string path = ReadPathArgument();
@@ -42,53 +85,14 @@ public static class MeasureTools
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         // Keep the prefab's own rotation and scale, only move it to the origin.
         instance.transform.position = Vector3.zero;
+        Physics.SyncTransforms();
         Transform root = instance.transform;
 
         var renderers = instance.GetComponentsInChildren<Renderer>(true);
-        bool first = true;
-        Bounds bounds = default;
-        foreach (var renderer in renderers)
-        {
-            if (first)
-            {
-                bounds = renderer.bounds;
-                first = false;
-            }
-            else
-            {
-                bounds.Encapsulate(renderer.bounds);
-            }
-        }
+        Bounds model = GetLocalModelBounds(instance, root);
 
-        Debug.Log($"MEASURE {path} renderers={renderers.Length} worldBoundsSize={bounds.size} worldBoundsCenter={bounds.center}");
+        Debug.Log($"MEASURE {path} renderers={renderers.Length} localModelSize={model.size} localModelCenter={model.center}");
         Debug.Log($"MEASURE {path} rootScale={root.lossyScale} rootEuler={root.localEulerAngles}");
-
-        // Convert the world space bounds into the root's local space. The corners
-        // are transformed one by one because the root is rotated, so a plain
-        // centre/extents conversion would give a wrong local box.
-        Vector3 localMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-        Vector3 localMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-        foreach (var renderer in renderers)
-        {
-            Bounds r = renderer.bounds;
-            Vector3 c = r.center;
-            Vector3 e = r.extents;
-            for (int xi = -1; xi <= 1; xi += 2)
-            {
-                for (int yi = -1; yi <= 1; yi += 2)
-                {
-                    for (int zi = -1; zi <= 1; zi += 2)
-                    {
-                        Vector3 corner = root.InverseTransformPoint(c + Vector3.Scale(e, new Vector3(xi, yi, zi)));
-                        localMin = Vector3.Min(localMin, corner);
-                        localMax = Vector3.Max(localMax, corner);
-                    }
-                }
-            }
-        }
-        Vector3 localSize = localMax - localMin;
-        Vector3 localCenter = (localMin + localMax) * 0.5f;
-        Debug.Log($"MEASURE {path} LOCAL model size={localSize} center={localCenter}");
 
         foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
         {
@@ -108,10 +112,7 @@ public static class MeasureTools
             Debug.Log($"MEASURE {path} collider on '{collider.name}' trigger={collider.isTrigger} {detail}");
         }
 
-        if (renderers.Length > 0)
-        {
-            Debug.Log($"MEASURE {path} SUGGESTED BoxCollider size={localSize} center={localCenter}");
-        }
+        Debug.Log($"MEASURE {path} SUGGESTED BoxCollider size={model.size} center={model.center}");
 
         UnityEngine.Object.DestroyImmediate(instance);
         EditorApplication.Exit(0);

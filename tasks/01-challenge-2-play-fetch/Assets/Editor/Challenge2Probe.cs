@@ -103,26 +103,8 @@ public static class Challenge2Probe
         Physics.SyncTransforms();
         Transform root = instance.transform;
 
-        var renderers = instance.GetComponentsInChildren<Renderer>(true);
-        Vector3 localMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
-        Vector3 localMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
-        foreach (var renderer in renderers)
-        {
-            Bounds r = renderer.bounds;
-            for (int xi = -1; xi <= 1; xi += 2)
-            {
-                for (int yi = -1; yi <= 1; yi += 2)
-                {
-                    for (int zi = -1; zi <= 1; zi += 2)
-                    {
-                        Vector3 corner = root.InverseTransformPoint(r.center + Vector3.Scale(r.extents, new Vector3(xi, yi, zi)));
-                        localMin = Vector3.Min(localMin, corner);
-                        localMax = Vector3.Max(localMax, corner);
-                    }
-                }
-            }
-        }
-        Vector3 modelSize = localMax - localMin;
+        Bounds model = MeasureTools.GetLocalModelBounds(instance, root);
+        Vector3 modelSize = model.size;
 
         BoxCollider collider = instance.GetComponent<BoxCollider>();
         if (collider == null)

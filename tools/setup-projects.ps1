@@ -1,5 +1,5 @@
 param(
-  [string]$RepoRoot = 'C:\Users\user\Desktop\lingjing'
+  [string]$RepoRoot = ''
 )
 
 # Configures the five Unity projects in tasks/ so they open correctly:
@@ -12,6 +12,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+if (-not $RepoRoot) {
+  $RepoRoot = Split-Path -Parent $PSScriptRoot
+}
 
 function Read-Text([string]$path) {
   return [System.IO.File]::ReadAllText($path)

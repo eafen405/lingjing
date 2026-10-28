@@ -13,6 +13,27 @@
 | 后端 | Mono（**不要**装 IL2CPP） |
 | 输入 | 旧版 Input Manager（`activeInputHandler: 0`） |
 
+## 三条硬规矩
+
+1. **必须带 `-projectPath`。** 不带的话 Unity 会把**当前工作目录**当成工程，
+   在仓库根目录生成 `Assets/`、`Packages/`、`ProjectSettings/`。本仓库已经踩过一次。
+2. **Play 模式探针不能加 `-quit`。** 加了 Unity 会在 `-executeMethod` 返回后立刻
+   退出，Play 模式回调根本没机会跑。探针自己在写完报告后调用
+   `EditorApplication.Exit(...)`。
+3. **第一次运行会花 1~3 分钟导入工程**（生成 `Library/`）。之后才是增量编译。
+   不要因为慢就以为卡死了。
+
+## 写 `tools/*.ps1` 的两条硬规矩
+
+1. **只写 ASCII。** Windows PowerShell 5.1 读取没有 BOM 的 `.ps1` 时按 ANSI（GBK）
+   解码，文件里的中文字面量会被解码成乱码，**引号数量一变就变成未闭合的字符串**，
+   整个脚本直接解析失败。注释里也不要写中文。
+2. **仓库根目录用 `$PSScriptRoot` 推导**，不要写死绝对路径。
+
+```powershell
+$repoRoot = Split-Path -Parent $PSScriptRoot
+```
+
 ## 跑 Unity 的唯一正确姿势
 
 **永远不要**用 `& $ue ...` 直接启动：`Unity.exe` 是 Windows GUI 程序，PowerShell
@@ -31,16 +52,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File 'C:\Users\user\Desktop\lingj
 - `-MethodArgs` 是**管道符分隔**的字符串（`powershell -File` 无法传数组）。
 - `-ProjectPath` 相对仓库根目录或绝对路径都行。
 - 脚本会 `Start-Process -Wait`，返回真实退出码，并打印编译错误。
-
-### 三条硬规矩
-
-1. **必须带 `-projectPath`。** 不带的话 Unity 会把**当前工作目录**当成工程，
-   在仓库根目录生成 `Assets/`、`Packages/`、`ProjectSettings/`。本仓库已经踩过一次。
-2. **Play 模式探针不能加 `-quit`。** 加了 Unity 会在 `-executeMethod` 返回后立刻
-   退出，Play 模式回调根本没机会跑。探针自己在写完报告后调用
-   `EditorApplication.Exit(...)`。
-3. **第一次运行会花 1~3 分钟导入工程**（生成 `Library/`）。之后才是增量编译。
-   不要因为慢就以为卡死了。
 
 ## 场景 / 预制体解析
 

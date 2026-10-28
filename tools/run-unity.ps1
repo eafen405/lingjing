@@ -15,8 +15,11 @@
     powershell -File tools/run-unity.ps1 `
         -ProjectPath 'tasks/01-challenge-2-play-fetch' `
         -Method Challenge2Probe.Run `
-        -MethodArgs 'Assets/Challenge 2/Challenge 2.unity', "$env:TEMP\probe.txt" `
+        -MethodArgs "Assets/Challenge 2/Challenge 2.unity|$env:TEMP\probe.txt" `
         -LogPath "$env:TEMP\probe.log"
+
+    The arguments after the method are separated by a pipe character, because
+    powershell -File cannot pass an array.
 #>
 [CmdletBinding()]
 param(

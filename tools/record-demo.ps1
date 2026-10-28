@@ -52,6 +52,24 @@ if (-not $UnityEditor) {
     $UnityEditor = 'C:\Program Files\Unity\Hub\Editor\2022.3.62f2\Editor\Unity.exe'
 }
 
+if (-not (Test-Path -LiteralPath $Python)) {
+    $found = $null
+    foreach ($candidate in @('D:\anacoda3\python.exe', 'D:\anaconda3\python.exe')) {
+        if (Test-Path -LiteralPath $candidate) {
+            $found = $candidate
+            break
+        }
+    }
+    if (-not $found) {
+        $command = Get-Command python -ErrorAction SilentlyContinue
+        if ($command) { $found = $command.Source }
+    }
+    if (-not $found) {
+        throw "Python was not found at '$Python'. Pass -Python <path to python.exe>."
+    }
+    $Python = $found
+}
+
 $framesDir = Join-Path $env:TEMP ("demo-frames-{0}" -f $projectSlug)
 if (Test-Path -LiteralPath $framesDir) {
     Remove-Item -LiteralPath $framesDir -Recurse -Force
