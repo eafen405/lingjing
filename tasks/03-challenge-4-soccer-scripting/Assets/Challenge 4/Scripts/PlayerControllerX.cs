@@ -14,22 +14,57 @@ public class PlayerControllerX : MonoBehaviour
 
     private float normalStrength = 10; // how hard to hit enemy without powerup
     private float powerupStrength = 25; // how hard to hit enemy with powerup
-    
+
+    // Bonus: the turbo boost. The smoke effect hangs under the focal point.
+    public GameObject dashParticleEffect;
+    public float dashStrength = 200;
+
     void Start()
     {
         playerRb = GetComponent<Rigidbody>();
         focalPoint = GameObject.Find("Focal Point");
+
+        if (dashParticleEffect == null && focalPoint != null)
+        {
+            ParticleSystem particles = focalPoint.GetComponentInChildren<ParticleSystem>(true);
+            if (particles != null)
+            {
+                dashParticleEffect = particles.gameObject;
+            }
+        }
     }
 
     void Update()
     {
         // Add force to player in direction of the focal point (and camera)
         float verticalInput = Input.GetAxis("Vertical");
-        playerRb.AddForce(focalPoint.transform.forward * verticalInput * speed * Time.deltaTime); 
+        playerRb.AddForce(focalPoint.transform.forward * verticalInput * speed * Time.deltaTime);
+
+        // Bonus: turbo boost on the space bar
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            Dash();
+        }
 
         // Set powerup indicator position to beneath player
         powerupIndicator.transform.position = transform.position + new Vector3(0, -0.6f, 0);
 
+    }
+
+    // Bonus: the turbo boost shoves the player towards the focal point and
+    // kicks off the smoke effect underneath it.
+    public void Dash()
+    {
+        playerRb.AddForce(focalPoint.transform.forward * dashStrength, ForceMode.Impulse);
+
+        if (dashParticleEffect != null)
+        {
+            ParticleSystem particles = dashParticleEffect.GetComponent<ParticleSystem>();
+            if (particles != null)
+            {
+                particles.Play();
+            }
+        }
     }
 
     // If Player collides with powerup, activate powerup
