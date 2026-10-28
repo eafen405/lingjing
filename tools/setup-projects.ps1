@@ -59,15 +59,19 @@ foreach ($p in $projects) {
   # Unity ships the built-in tags implicitly; the file may hold them either as
   # an inline empty list (`tags: []`) or as an explicit list. Keep whichever
   # already exists and append the tags this project needs.
+  # The list block must not run past the tags: the layers list below it uses
+  # the same indentation, so the pattern is line based and not greedy.
   $existing = @()
-  $inline = [regex]::Match($tag, '(?m)^  tags:\s*\[\]?\s*$').Value
-  $listBlock = [regex]::Match($tag, '(?s)  tags:\r?\n((?:  - .*\r?\n?)*)').Groups[1].Value
+  $listBlock = [regex]::Match($tag, '(?m)^  tags:\r?\n((?:  - [^\r\n]*\r?\n?)*)').Groups[1].Value
   if ($listBlock) {
     $existing = @($listBlock -split "`r?`n" | Where-Object { $_ -match '^\s+- \S' } | ForEach-Object { ($_ -replace '^\s*- ', '').Trim() })
   }
   $allTags = @($existing + $p.Tags | Select-Object -Unique)
   $tagBody = '  tags:' + $nl + (($allTags | ForEach-Object { "  - $_" }) -join $nl)
-  $tag = [regex]::Replace($tag, '(?m)^  tags:.*$', [System.Text.RegularExpressions.MatchEvaluator]{ param($m2) $tagBody })
+  # The whole block is replaced, not just the "tags:" line: otherwise the list
+  # that was already in the file stays behind and the tags get duplicated.
+  $tagPattern = '(?m)^  tags:.*(?:\r?\n  - [^\r\n]*)*'
+  $tag = [regex]::Replace($tag, $tagPattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($m2) $tagBody })
   Write-Text $tagPath $tag
   Write-Host "  tags: $($allTags -join ', ')"
 
