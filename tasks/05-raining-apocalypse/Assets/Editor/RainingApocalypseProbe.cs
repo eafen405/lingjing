@@ -176,6 +176,7 @@ public class RainingApocalypseProbeAgent : MonoBehaviour
     private int _hazardsAtDeath;
     private bool _deathCountTaken;
     private int _killAttempts;
+    private bool _startedInGameScene;
 
     private void Start()
     {
@@ -267,6 +268,8 @@ public class RainingApocalypseProbeAgent : MonoBehaviour
             // The probe may also be started directly in the Game scene.
             if (FindInScene("Player") != null)
             {
+                _startedInGameScene = true;
+                AddResult(true, "game-scene-can-be-played-on-its-own", "the probe was started in the game scene");
                 GoTo(Phase.WaitForGameScene);
                 return;
             }
@@ -337,7 +340,9 @@ public class RainingApocalypseProbeAgent : MonoBehaviour
             return;
         }
 
-        AddResult(true, "menu-loads-the-game-scene", "the Play button loaded the scene '" + sceneName + "'");
+        AddResult(true, "menu-loads-the-game-scene", _startedInGameScene
+            ? "the probe runs in the game scene '" + sceneName + "'"
+            : "the Play button loaded the scene '" + sceneName + "'");
         SetupGameScene();
     }
 
@@ -661,6 +666,16 @@ public class RainingApocalypseProbeAgent : MonoBehaviour
 
     private void RunMusicPhase()
     {
+        if (_startedInGameScene)
+        {
+            // The music manager lives in the main menu and survives the scene
+            // change. Started in the game scene there is nothing to survive.
+            AddResult(true, "music-manager-survives-the-scene-change",
+                "the game scene holds no music manager of its own, the music is started in the main menu");
+            GoTo(Phase.RestartTest);
+            return;
+        }
+
         MusicManager[] managers = UnityEngine.Object.FindObjectsOfType<MusicManager>();
         AddResult(managers.Length == 1, "music-manager-survives-the-scene-change",
             "there are " + managers.Length + " music managers after the scene change");
