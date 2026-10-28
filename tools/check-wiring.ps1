@@ -73,11 +73,11 @@ foreach ($tag in @($spec.tags)) {
 # --- project settings -------------------------------------------------------
 $projectSettings = Read-Text 'ProjectSettings/ProjectSettings.asset'
 if ($projectSettings) {
-    $inputHandler = [regex]::Match($projectSettings, '(?m)^activeInputHandler:\s*(\d+)').Groups[1].Value
+    $inputHandler = [regex]::Match($projectSettings, '(?m)^\s*activeInputHandler:\s*(\d+)').Groups[1].Value
     Add-Result ($inputHandler -eq '0') 'input/legacy-input-manager' "activeInputHandler is '$inputHandler', expected 0 (old Input Manager)"
 
     if ($spec.productName) {
-        $product = [regex]::Match($projectSettings, '(?m)^productName:\s*(.+)$').Groups[1].Value.Trim()
+        $product = [regex]::Match($projectSettings, '(?m)^\s*productName:\s*(.+)$').Groups[1].Value.Trim()
         Add-Result ($product -eq $spec.productName) 'settings/product-name' "productName is '$product', expected '$($spec.productName)'"
     }
 }

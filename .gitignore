@@ -10,9 +10,9 @@
 [Mm]emoryCaptures/
 [Rr]ecordings/
 Assets/AssetStoreTools*
-Assets/Resources/BillingMode.json
-Assets/Resources/BillingMode.json.meta
-ProjectSettings/Packages/com.unity.services.core/
+**/Assets/Resources/BillingMode.json
+**/Assets/Resources/BillingMode.json.meta
+**/ProjectSettings/Packages/com.unity.services.core/
 
 # ── Git worktrees used for parallel ticket work ─────────────────────────
 .worktrees/
