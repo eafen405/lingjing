@@ -336,6 +336,8 @@ MonoBehaviour:
   powerupPrefab: {fileID: 4446131693967519089, guid: c5497424856514b2ba61b78375567988, type: 3}
   enemyCount: 0
   waveCount: 1
+  enemySpeed: 500
+  enemySpeedIncrease: 10
   player: {fileID: 583048338}
 --- !u!1001 &258741155
 PrefabInstance:

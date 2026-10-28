@@ -88,13 +88,23 @@ public static class Challenge4SceneSetup
 
         controller.dashParticleEffect = smoke;
 
+        // The wave speed lives in the scene, so it has to be written down
+        // here as well.
+        var manager = spawner.GetComponent<SpawnManagerX>();
+        if (manager != null)
+        {
+            manager.enemySpeed = 500f;
+            manager.enemySpeedIncrease = 10f;
+        }
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
 
         Debug.Log(string.Format(
-            "CHALLENGE4-SETUP: smoke parent={0} localPosition={1} dashParticleEffect={2}",
+            "CHALLENGE4-SETUP: smoke parent={0} localPosition={1} dashParticleEffect={2} enemySpeed={3}",
             smoke.transform.parent != null ? smoke.transform.parent.name : "<none>",
             smoke.transform.localPosition,
-            controller.dashParticleEffect != null ? controller.dashParticleEffect.name : "<none>"));
+            controller.dashParticleEffect != null ? controller.dashParticleEffect.name : "<none>",
+            manager != null ? manager.enemySpeed.ToString("F2") : "<none>"));
     }
 }
