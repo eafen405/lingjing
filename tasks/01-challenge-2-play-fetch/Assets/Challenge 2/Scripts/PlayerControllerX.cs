@@ -12,10 +12,21 @@ public class PlayerControllerX : MonoBehaviour
     void Update()
     {
         // On spacebar press, send dog
-        if (Input.GetKeyDown(KeyCode.Space) && Time.time >= nextSpawnTime)
+        if (Input.GetKeyDown(KeyCode.Space))
         {
-            Instantiate(dogPrefab, transform.position, dogPrefab.transform.rotation);
-            nextSpawnTime = Time.time + spawnCooldown;
+            SpawnDog();
         }
+    }
+
+    /// <summary>Sends a dog to catch the next ball, respecting the cooldown.</summary>
+    public void SpawnDog()
+    {
+        if (Time.time < nextSpawnTime)
+        {
+            return;
+        }
+
+        Instantiate(dogPrefab, transform.position, dogPrefab.transform.rotation);
+        nextSpawnTime = Time.time + spawnCooldown;
     }
 }
