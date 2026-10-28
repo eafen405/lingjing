@@ -38,6 +38,7 @@
 - `Challenge 5.unity`：三个难度按钮的 `Text` 子物体对齐各不相同（`UpperCenter` / `LowerLeft` / `LowerRight`）→ 全部改成 `MiddleCenter`（`m_Alignment: 4`）。
 - `Challenge 5.unity` + `GameManagerX`：新增 `Time Text`（TextMeshProUGUI）倒计时对象，由 Game Manager 每帧用 `Time.deltaTime` 递减、`Mathf.Round` 取整秒显示，归零时调用 `GameOver()` 结束这一局。
 - `Assets/TextMesh Pro/`：工程原本没有导入 TextMeshPro Essential Resources，`TMP_Settings` 为空会让 UI 在运行时报警 → 从 `com.unity.textmeshpro` 包里的 `TMP Essential Resources.unitypackage` 导入（设置、默认字体、TMP 着色器）。
+- `Packages/manifest.json`：仓库里的清单只列了 5 个包，Unity 打开工程后会写回完整的包列表（含 `com.unity.modules.physics` 等内置模块）→ 把编辑器解析出来的清单提交，避免脚本编译失败。
 
 ## 验证
 
