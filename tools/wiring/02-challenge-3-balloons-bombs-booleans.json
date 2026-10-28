@@ -1,0 +1,47 @@
+{
+  "productName": "Challenge 3 Balloons Bombs Booleans",
+  "tags": ["Background", "Bomb", "Money", "Ground"],
+  "scenes": ["Assets/Challenge 3/Challenge 3.unity"],
+  "sourceChecks": [
+    {
+      "file": "Assets/Challenge 3/Scripts/PlayerControllerX.cs",
+      "contains": [
+        "GetComponent<Rigidbody>()",
+        "Input.GetKey(KeyCode.Space)",
+        "isLowEnough",
+        "bounceSound",
+        "CompareTag(\"Ground\")",
+        "fireworksParticle.transform.position = transform.position"
+      ]
+    },
+    {
+      "file": "Assets/Challenge 3/Scripts/MoveLeftX.cs",
+      "contains": ["if (!playerControllerScript.gameOver)"],
+      "mustNotContain": ["if (playerControllerScript.gameOver)"]
+    },
+    {
+      "file": "Assets/Challenge 3/Scripts/SpawnManagerX.cs",
+      "contains": ["SpawnObjects"],
+      "mustNotContain": ["PrawnsObject"]
+    },
+    {
+      "file": "Assets/Challenge 3/Scripts/RepeatBackgroundX.cs",
+      "contains": ["size.x"],
+      "mustNotContain": ["size.y"]
+    },
+    {
+      "file": "Assets/Challenge 3/Prefabs/Bomb.prefab",
+      "contains": ["m_TagString: Bomb"]
+    },
+    {
+      "file": "Assets/Challenge 3/Prefabs/Money.prefab",
+      "contains": ["m_TagString: Money"]
+    }
+  ],
+  "sceneChecks": [
+    {
+      "scene": "Assets/Challenge 3/Challenge 3.unity",
+      "contains": ["m_TagString: Ground", "m_Size: {x: 10, y: 0.2, z: 10}"]
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "productName": "Raining Apocalypse",
+  "tags": ["Ground"],
+  "scenes": ["Assets/Scenes/MainMenu.unity", "Assets/Scenes/Game.unity"],
+  "sourceChecks": [
+    {
+      "file": "Assets/Scripts/Player.cs",
+      "contains": [
+        "startDashTime",
+        "dashTime",
+        "extraSpeed",
+        "dashing",
+        "Time.deltaTime",
+        "KeyCode.Space",
+        "Input.GetAxisRaw(\"Horizontal\")",
+        "TakeDamage"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/GameManager.cs",
+      "contains": ["SceneManager.LoadScene(\"Game\")"]
+    },
+    {
+      "file": "Assets/Scripts/Enemy.cs",
+      "contains": [
+        "OnTriggerEnter2D",
+        "hitObject.tag == \"Player\"",
+        "hitObject.tag == \"Ground\"",
+        "Random.Range(minSpeed, maxSpeed)",
+        "Vector2.down"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/MusicManager.cs",
+      "contains": ["DontDestroyOnLoad", "instance"]
+    },
+    {
+      "file": "Assets/Scripts/Spawner.cs",
+      "contains": [
+        "Transform[] spawnPoints",
+        "GameObject[] hazards",
+        "startTimeBtwSpawns",
+        "minTimeBetweenSpawns",
+        "decrease"
+      ]
+    },
+    {
+      "file": "Assets/Scripts/Exercises/HotAndColdGame.cs",
+      "contains": ["StartNewGame", "Guess", "Mathf.Abs"]
+    },
+    {
+      "file": "Assets/Editor/RainingApocalypseProbe.cs",
+      "contains": ["RainingApocalypseProbe", "EditorApplication.Exit"]
+    }
+  ],
+  "sceneChecks": [
+    {
+      "scene": "Assets/Scenes/Game.unity",
+      "contains": [
+        "m_Name: Ground",
+        "m_TagString: Ground",
+        "m_Name: Spawner",
+        "m_Name: SpawnPoint",
+        "m_Name: LosePanel",
+        "m_Name: Player",
+        "m_TagString: Player"
+      ]
+    },
+    {
+      "scene": "Assets/Scenes/MainMenu.unity",
+      "contains": ["m_Name: PlayButton", "m_MethodName: PlayGame", "m_Name: Music"]
+    }
+  ]
+}

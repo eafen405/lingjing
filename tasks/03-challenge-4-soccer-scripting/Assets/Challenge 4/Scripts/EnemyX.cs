@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class EnemyX : MonoBehaviour
 {
+    // The force per physics step has to beat the static friction of the
+    // ground (0.6 * gravity), otherwise the balls never start rolling.
     public float speed;
     private Rigidbody enemyRb;
     private GameObject playerGoal;
@@ -12,14 +14,19 @@ public class EnemyX : MonoBehaviour
     void Start()
     {
         enemyRb = GetComponent<Rigidbody>();
+        playerGoal = GameObject.Find("Player Goal");
     }
 
-    // Update is called once per frame
-    void Update()
+    // FixedUpdate is called once per physics step, so the force towards the
+    // goal is the same no matter how many frames the editor draws.
+    void FixedUpdate()
     {
         // Set enemy direction towards player goal and move there
         Vector3 lookDirection = (playerGoal.transform.position - transform.position).normalized;
-        enemyRb.AddForce(lookDirection * speed * Time.deltaTime);
+
+        // A sleeping ball would ignore the force, so wake it up first.
+        enemyRb.WakeUp();
+        enemyRb.AddForce(lookDirection * speed * Time.fixedDeltaTime);
 
     }
 

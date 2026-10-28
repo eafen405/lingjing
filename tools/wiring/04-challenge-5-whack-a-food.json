@@ -1,0 +1,37 @@
+{
+  "productName": "Challenge 5 Whack a Food",
+  "tags": ["Bad", "Sensor"],
+  "scenes": ["Assets/Challenge 5/Challenge 5.unity"],
+  "sourceChecks": [
+    {
+      "file": "Assets/Challenge 5/Scripts/GameManagerX.cs",
+      "contains": [
+        "Score: ",
+        "restartButton.gameObject.SetActive(true)",
+        "StartGame(int difficulty)",
+        "SpawnRateForDifficulty",
+        "Time: ",
+        "Mathf.Round",
+        "Time.deltaTime"
+      ]
+    },
+    {
+      "file": "Assets/Challenge 5/Scripts/DifficultyButtonX.cs",
+      "contains": ["StartGame(difficulty)"]
+    },
+    {
+      "file": "Assets/Challenge 5/Scripts/TargetX.cs",
+      "contains": ["OnMouseDown"],
+      "mustNotContain": ["OnMouseEnter"]
+    }
+  ],
+  "sceneChecks": [
+    {
+      "scene": "Assets/Challenge 5/Challenge 5.unity",
+      "contains": [
+        "m_Name: Time Text",
+        "timeText: {fileID:"
+      ]
+    }
+  ]
+}

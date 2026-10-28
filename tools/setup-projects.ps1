@@ -1,5 +1,5 @@
 param(
-  [string]$RepoRoot = 'C:\Users\user\Desktop\lingjing'
+  [string]$RepoRoot = ''
 )
 
 # Configures the five Unity projects in tasks/ so they open correctly:
@@ -12,6 +12,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+if (-not $RepoRoot) {
+  $RepoRoot = Split-Path -Parent $PSScriptRoot
+}
 
 function Read-Text([string]$path) {
   return [System.IO.File]::ReadAllText($path)
@@ -59,15 +63,19 @@ foreach ($p in $projects) {
   # Unity ships the built-in tags implicitly; the file may hold them either as
   # an inline empty list (`tags: []`) or as an explicit list. Keep whichever
   # already exists and append the tags this project needs.
+  # The list block must not run past the tags: the layers list below it uses
+  # the same indentation, so the pattern is line based and not greedy.
   $existing = @()
-  $inline = [regex]::Match($tag, '(?m)^  tags:\s*\[\]?\s*$').Value
-  $listBlock = [regex]::Match($tag, '(?s)  tags:\r?\n((?:  - .*\r?\n?)*)').Groups[1].Value
+  $listBlock = [regex]::Match($tag, '(?m)^  tags:\r?\n((?:  - [^\r\n]*\r?\n?)*)').Groups[1].Value
   if ($listBlock) {
     $existing = @($listBlock -split "`r?`n" | Where-Object { $_ -match '^\s+- \S' } | ForEach-Object { ($_ -replace '^\s*- ', '').Trim() })
   }
   $allTags = @($existing + $p.Tags | Select-Object -Unique)
   $tagBody = '  tags:' + $nl + (($allTags | ForEach-Object { "  - $_" }) -join $nl)
-  $tag = [regex]::Replace($tag, '(?m)^  tags:.*$', [System.Text.RegularExpressions.MatchEvaluator]{ param($m2) $tagBody })
+  # The whole block is replaced, not just the "tags:" line: otherwise the list
+  # that was already in the file stays behind and the tags get duplicated.
+  $tagPattern = '(?m)^  tags:.*(?:\r?\n  - [^\r\n]*)*'
+  $tag = [regex]::Replace($tag, $tagPattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($m2) $tagBody })
   Write-Text $tagPath $tag
   Write-Host "  tags: $($allTags -join ', ')"
 
@@ -83,9 +91,11 @@ foreach ($p in $projects) {
   Write-Host "  product: $($p.Product), activeInputHandler: 0"
 
   # ---- EditorBuildSettings: the scenes that ship in the build ----
+  # The repository stores LF line endings, so the file is written with LF as
+  # well. Otherwise every run of this script shows up as a change.
   $sceneLines = ($p.Scenes | ForEach-Object {
-    "  - enabled: 1`r`n    path: $($_.Path)`r`n    guid: $($_.Guid)"
-  }) -join "`r`n"
+    "  - enabled: 1`n    path: $($_.Path)`n    guid: $($_.Guid)"
+  }) -join "`n"
   $build = @"
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
@@ -97,6 +107,6 @@ EditorBuildSettings:
 $sceneLines
   m_configObjects: {}
 "@
-  Write-Text (Join-Path $proj 'ProjectSettings\EditorBuildSettings.asset') ($build -replace "`n", "`r`n")
+  Write-Text (Join-Path $proj 'ProjectSettings\EditorBuildSettings.asset') ($build -replace "`r`n", "`n")
   Write-Host "  scenes: $($p.Scenes.Count)"
 }
