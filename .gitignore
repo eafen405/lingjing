@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# PyTorch model checkpoints and datasets
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+runs/
+data/
+datasets/
+*.npy
+*.npz
+
+# Experiment logs
+*.log
+wandb/
+mlruns/
+lightning_logs/
+
+# Matplotlib / notebook artifacts
+.mpl-cache/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# OS
+Thumbs.db
+desktop.ini
