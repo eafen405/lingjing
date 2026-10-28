@@ -19,7 +19,14 @@ public class Enemy : MonoBehaviour
     void Start()
     {
         speed = Random.Range(minSpeed, maxSpeed);
-        playerScript = GameObject.FindGameObjectWithTag("Player").GetComponent<Player>();
+
+        // The player can already be gone when a hazard spawns, so the lookup
+        // has to be guarded.
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        if (playerObject != null)
+        {
+            playerScript = playerObject.GetComponent<Player>();
+        }
     }
 
     // Update is called once per frame
@@ -32,7 +39,9 @@ public class Enemy : MonoBehaviour
     {
 
         if(hitObject.tag == "Player") {
-            playerScript.TakeDamage(damage);
+            if (playerScript != null) {
+                playerScript.TakeDamage(damage);
+            }
             Instantiate(explosion, transform.position, Quaternion.identity);
             Destroy(gameObject);
         }
