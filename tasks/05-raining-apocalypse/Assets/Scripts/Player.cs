@@ -58,11 +58,16 @@ public class Player : MonoBehaviour
         if (input != 0)
         {
             facingDirection = Mathf.Sign(input);
+
+            // A dash follows the arrow key that is held down.
+            if (dashing)
+            {
+                dashDirection = facingDirection;
+            }
         }
 
-        // While dashing the player faces the dash direction, otherwise the
-        // direction of the arrow key that is held down.
-        float facing = dashing ? dashDirection : input;
+        // The direction the player is actually moving in.
+        float facing = MoveDirection;
 
         anim.SetBool("isRunning", facing != 0);
 
@@ -72,6 +77,23 @@ public class Player : MonoBehaviour
         }
         else if (facing < 0) {
             transform.eulerAngles = new Vector3(0, 180, 0);
+        }
+    }
+
+    /// <summary>
+    /// The direction the player moves in: the direction that is held down, or
+    /// the direction of the dash while the dash carries the player.
+    /// </summary>
+    private float MoveDirection
+    {
+        get
+        {
+            if (input != 0)
+            {
+                return input;
+            }
+
+            return dashing ? dashDirection : 0f;
         }
     }
 
@@ -138,11 +160,7 @@ public class Player : MonoBehaviour
 
         // While dashing the player keeps the dash direction, even when no
         // arrow key is held down any more.
-        float direction = input;
-        if (dashing && Mathf.Approximately(direction, 0f))
-        {
-            direction = dashDirection;
-        }
+        float direction = MoveDirection;
 
         // Moving player. While dashing, extraSpeed is added to the movement
         // speed.
