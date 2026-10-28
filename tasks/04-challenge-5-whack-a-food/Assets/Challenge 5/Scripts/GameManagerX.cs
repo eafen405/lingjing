@@ -18,19 +18,41 @@ public class GameManagerX : MonoBehaviour
     private float spawnRate = 1.5f;
     public bool isGameActive;
 
+    private Coroutine spawnRoutine;
+
     private float spaceBetweenSquares = 2.5f; 
     private float minValueX = -3.75f; //  x value of the center of the left-most square
     private float minValueY = -3.75f; //  y value of the center of the bottom-most square
     
     // Start the game, remove title screen, reset score, and adjust spawnRate based on difficulty button clicked
-    public void StartGame()
+    public void StartGame(int difficulty)
     {
-        spawnRate /= 5;
+        spawnRate = SpawnRateForDifficulty(difficulty);
         isGameActive = true;
-        StartCoroutine(SpawnTarget());
+
+        if (spawnRoutine != null)
+        {
+            StopCoroutine(spawnRoutine);
+        }
+        spawnRoutine = StartCoroutine(SpawnTarget());
+
         score = 0;
         UpdateScore(0);
         titleScreen.SetActive(false);
+    }
+
+    // The harder the difficulty, the faster the food pops up
+    private float SpawnRateForDifficulty(int difficulty)
+    {
+        switch (difficulty)
+        {
+            case 1:
+                return 2f;      // Easy: slow
+            case 3:
+                return 0.75f;   // Hard: fast
+            default:
+                return 1.5f;    // Medium: the normal pace
+        }
     }
 
     // While game is active spawn a random target
