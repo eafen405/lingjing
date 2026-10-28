@@ -147,6 +147,13 @@ foreach ($item in $deliverables) {
             $failed += "$($item.Dir): the recording failed"
         }
     }
+    else {
+        # The recording may exist from an earlier run.
+        $existing = Join-Path $buildOut 'demo.mp4'
+        if (Test-Path -LiteralPath $existing) {
+            Copy-Item -LiteralPath $existing -Destination (Join-Path $videoDir ("{0}.mp4" -f $item.Dir)) -Force
+        }
+    }
 
     $target = Join-Path $buildDir $item.Dir
     New-Item -ItemType Directory -Path $target -Force | Out-Null
