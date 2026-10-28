@@ -87,9 +87,11 @@ foreach ($p in $projects) {
   Write-Host "  product: $($p.Product), activeInputHandler: 0"
 
   # ---- EditorBuildSettings: the scenes that ship in the build ----
+  # The repository stores LF line endings, so the file is written with LF as
+  # well. Otherwise every run of this script shows up as a change.
   $sceneLines = ($p.Scenes | ForEach-Object {
-    "  - enabled: 1`r`n    path: $($_.Path)`r`n    guid: $($_.Guid)"
-  }) -join "`r`n"
+    "  - enabled: 1`n    path: $($_.Path)`n    guid: $($_.Guid)"
+  }) -join "`n"
   $build = @"
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
@@ -101,6 +103,6 @@ EditorBuildSettings:
 $sceneLines
   m_configObjects: {}
 "@
-  Write-Text (Join-Path $proj 'ProjectSettings\EditorBuildSettings.asset') ($build -replace "`n", "`r`n")
+  Write-Text (Join-Path $proj 'ProjectSettings\EditorBuildSettings.asset') ($build -replace "`r`n", "`n")
   Write-Host "  scenes: $($p.Scenes.Count)"
 }
