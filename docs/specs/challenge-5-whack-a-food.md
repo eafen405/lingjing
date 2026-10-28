@@ -45,7 +45,7 @@
 
 | 层 | 工具 | 结果 |
 | --- | --- | --- |
-| 缝一 静态接线 | `tools/check-wiring.ps1` | 15 项全通过 |
+| 缝一 静态接线 | `tools/check-wiring.ps1` | 17 项全通过 |
 | 缝二 Play 探针 | `Assets/Editor/Challenge5Probe.cs` | 38 项全通过（`checks: 38  failed: 0`） |
 | 缝三 构建冒烟 | `tools/build-project.ps1` | 由打包阶段统一执行 |
 
