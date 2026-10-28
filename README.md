@@ -26,7 +26,10 @@ Raining Apocalypse**，每个都是一个可独立运行、可独立打包的 Un
 
 ## 怎么跑起来
 
-需要 Unity **2022.3.62f2**（LTS）与 Unity Personal 许可。
+**最省事**：交付包的 `02-players/` 里是五个独立的 Windows 64 位程序，双击即玩，不用装 Unity。
+每个游戏的操作与玩法见 **[docs/delivery/how-to-play.md](docs/delivery/how-to-play.md)**。
+
+想在 Unity 里改代码的话，需要 Unity **2022.3.62f2**（LTS）与 Unity Personal 许可：
 
 ```bash
 # 用 Unity Hub 打开任意一个工程目录，例如：
