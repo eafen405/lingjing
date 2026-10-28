@@ -26,13 +26,15 @@
       → for 循环改用 `enemiesToSpawn` 参数，第 1 波 1 个、第 2 波 2 个。
 - [x] 敌方球完全不动（`EnemyX.cs` 空引用，`playerGoal` 从未赋值）
       → `Start()` 里 `playerGoal = GameObject.Find("Player Goal")`；`Enemy.prefab` 的 `speed` 由 0 改为 500，
-        `Update` 改为 `FixedUpdate` + `Time.fixedDeltaTime`（推力必须大于地面 0.6 的静摩擦，球才会滚动）。
+        `Update` 改为 `FixedUpdate` + `Time.fixedDeltaTime`（推力必须大于地面 0.6 的静摩擦，球才会滚动），
+        施力前先 `WakeUp()`（睡着的刚体会忽略推力）。
 
 ## 加分项
 
 - [x] 空格键加速冲刺，Focal Point 下方挂粒子效果
       → `Input.GetKeyDown(KeyCode.Space)` 调用 `PlayerControllerX.Dash()`：沿 Focal Point 前向给玩家一次冲量，
         同时播放 `Smoke_Particle`；该预制体已挂到 `Focal Point` 之下（`Challenge4SceneSetup.Apply` 完成接线）。
+        冲量前先 `WakeUp()`，否则站住不动的玩家会忽略冲刺。
 - [x] 敌人速度每波略微提升
       → `SpawnManagerX.enemySpeed` 每波增加 10，生成敌人时写入 `EnemyX.speed`。
 
