@@ -1,0 +1,12 @@
+{
+  "productName": "Raining Apocalypse",
+  "tags": ["Ground"],
+  "scenes": ["Assets/Scenes/MainMenu.unity", "Assets/Scenes/Game.unity"],
+  "sourceChecks": [
+    {
+      "file": "Assets/Scripts/Player.cs",
+      "contains": ["dashing", "Time.deltaTime"]
+    }
+  ],
+  "sceneChecks": []
+}

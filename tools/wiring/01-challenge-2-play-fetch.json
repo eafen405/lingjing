@@ -1,0 +1,31 @@
+{
+  "productName": "Challenge 2 Play Fetch",
+  "tags": ["Dog"],
+  "scenes": ["Assets/Challenge 2/Challenge 2.unity"],
+  "sourceChecks": [
+    {
+      "file": "Assets/Challenge 2/Scripts/PlayerControllerX.cs",
+      "contains": ["KeyCode.Space", "public void SpawnDog()"]
+    },
+    {
+      "file": "Assets/Challenge 2/Scripts/SpawnManagerX.cs",
+      "contains": ["Random.Range(0, ballPrefabs.Length)", "Random.Range(minSpawnInterval, maxSpawnInterval)"],
+      "mustNotContain": ["ballPrefabs[0]"]
+    },
+    {
+      "file": "Assets/Challenge 2/Scripts/DestroyOutOfBoundsX.cs",
+      "contains": ["CompareTag(\"Dog\")", "Game Over"]
+    },
+    {
+      "file": "Assets/Challenge 2/Scripts/DetectCollisionsX.cs",
+      "contains": ["CompareTag(\"Dog\")"]
+    }
+  ],
+  "sceneChecks": [
+    {
+      "scene": "Assets/Challenge 2/Challenge 2.unity",
+      "contains": ["dogPrefab: {fileID: 8241448880393145375, guid: 3e5fe95e580114a5f8f8348678e77463"],
+      "mustNotContain": ["dogPrefab: {fileID: 4524317531697499709"]
+    }
+  ]
+}

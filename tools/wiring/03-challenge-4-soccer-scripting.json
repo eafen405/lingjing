@@ -1,0 +1,21 @@
+{
+  "productName": "Challenge 4 Soccer Scripting",
+  "tags": ["Enemy", "Powerup"],
+  "scenes": ["Assets/Challenge 4/Challenge 4.unity"],
+  "sourceChecks": [
+    {
+      "file": "Assets/Challenge 4/Scripts/PlayerControllerX.cs",
+      "contains": ["StartCoroutine", "other.gameObject.transform.position - transform.position"]
+    },
+    {
+      "file": "Assets/Challenge 4/Scripts/SpawnManagerX.cs",
+      "contains": ["enemiesToSpawn"],
+      "mustNotContain": ["FindGameObjectsWithTag(\"Powerup\")"]
+    },
+    {
+      "file": "Assets/Challenge 4/Scripts/EnemyX.cs",
+      "contains": ["playerGoal"]
+    }
+  ],
+  "sceneChecks": []
+}
