@@ -9,6 +9,7 @@ public class GameManagerX : MonoBehaviour
 {
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI gameOverText;
+    public TextMeshProUGUI timeText;
     public GameObject titleScreen;
     public Button restartButton; 
 
@@ -17,6 +18,10 @@ public class GameManagerX : MonoBehaviour
     private int score;
     private float spawnRate = 1.5f;
     public bool isGameActive;
+
+    // The round lasts one minute
+    public const float GameLengthSeconds = 60f;
+    private float timeRemaining = GameLengthSeconds;
 
     private Coroutine spawnRoutine;
 
@@ -38,6 +43,8 @@ public class GameManagerX : MonoBehaviour
 
         score = 0;
         UpdateScore(0);
+        timeRemaining = GameLengthSeconds;
+        UpdateTimeText();
         titleScreen.SetActive(false);
     }
 
@@ -93,6 +100,40 @@ public class GameManagerX : MonoBehaviour
     {
         score += scoreToAdd;
         scoreText.text = "Score: " + score;
+    }
+
+    // Count the round down and end the game when the time runs out
+    private void Update()
+    {
+        if (!isGameActive)
+        {
+            return;
+        }
+
+        timeRemaining -= Time.deltaTime;
+        if (timeRemaining <= 0f)
+        {
+            timeRemaining = 0f;
+            UpdateTimeText();
+            GameOver();
+            return;
+        }
+
+        UpdateTimeText();
+    }
+
+    // Show the time left as whole seconds
+    private void UpdateTimeText()
+    {
+        if (timeText != null)
+        {
+            timeText.text = "Time: " + Mathf.Round(timeRemaining);
+        }
+    }
+
+    private void Start()
+    {
+        UpdateTimeText();
     }
 
     // Stop game, bring up game over text and restart button
