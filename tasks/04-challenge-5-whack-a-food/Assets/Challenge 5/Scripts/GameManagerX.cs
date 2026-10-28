@@ -9,6 +9,7 @@ public class GameManagerX : MonoBehaviour
 {
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI gameOverText;
+    public TextMeshProUGUI timeText;
     public GameObject titleScreen;
     public Button restartButton; 
 
@@ -18,19 +19,47 @@ public class GameManagerX : MonoBehaviour
     private float spawnRate = 1.5f;
     public bool isGameActive;
 
+    // The round lasts one minute
+    public const float GameLengthSeconds = 60f;
+    private float timeRemaining = GameLengthSeconds;
+
+    private Coroutine spawnRoutine;
+
     private float spaceBetweenSquares = 2.5f; 
     private float minValueX = -3.75f; //  x value of the center of the left-most square
     private float minValueY = -3.75f; //  y value of the center of the bottom-most square
     
     // Start the game, remove title screen, reset score, and adjust spawnRate based on difficulty button clicked
-    public void StartGame()
+    public void StartGame(int difficulty)
     {
-        spawnRate /= 5;
+        spawnRate = SpawnRateForDifficulty(difficulty);
         isGameActive = true;
-        StartCoroutine(SpawnTarget());
+
+        if (spawnRoutine != null)
+        {
+            StopCoroutine(spawnRoutine);
+        }
+        spawnRoutine = StartCoroutine(SpawnTarget());
+
         score = 0;
         UpdateScore(0);
+        timeRemaining = GameLengthSeconds;
+        UpdateTimeText();
         titleScreen.SetActive(false);
+    }
+
+    // The harder the difficulty, the faster the food pops up
+    private float SpawnRateForDifficulty(int difficulty)
+    {
+        switch (difficulty)
+        {
+            case 1:
+                return 2f;      // Easy: slow
+            case 3:
+                return 0.75f;   // Hard: fast
+            default:
+                return 1.5f;    // Medium: the normal pace
+        }
     }
 
     // While game is active spawn a random target
@@ -70,14 +99,48 @@ public class GameManagerX : MonoBehaviour
     public void UpdateScore(int scoreToAdd)
     {
         score += scoreToAdd;
-        scoreText.text = "score";
+        scoreText.text = "Score: " + score;
+    }
+
+    // Count the round down and end the game when the time runs out
+    private void Update()
+    {
+        if (!isGameActive)
+        {
+            return;
+        }
+
+        timeRemaining -= Time.deltaTime;
+        if (timeRemaining <= 0f)
+        {
+            timeRemaining = 0f;
+            UpdateTimeText();
+            GameOver();
+            return;
+        }
+
+        UpdateTimeText();
+    }
+
+    // Show the time left as whole seconds
+    private void UpdateTimeText()
+    {
+        if (timeText != null)
+        {
+            timeText.text = "Time: " + Mathf.Round(timeRemaining);
+        }
+    }
+
+    private void Start()
+    {
+        UpdateTimeText();
     }
 
     // Stop game, bring up game over text and restart button
     public void GameOver()
     {
         gameOverText.gameObject.SetActive(true);
-        restartButton.gameObject.SetActive(false);
+        restartButton.gameObject.SetActive(true);
         isGameActive = false;
     }
 

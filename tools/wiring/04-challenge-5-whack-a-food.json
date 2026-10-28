@@ -5,7 +5,15 @@
   "sourceChecks": [
     {
       "file": "Assets/Challenge 5/Scripts/GameManagerX.cs",
-      "contains": ["Score: ", "restartButton.gameObject.SetActive(true)"]
+      "contains": [
+        "Score: ",
+        "restartButton.gameObject.SetActive(true)",
+        "StartGame(int difficulty)",
+        "SpawnRateForDifficulty",
+        "Time: ",
+        "Mathf.Round",
+        "Time.deltaTime"
+      ]
     },
     {
       "file": "Assets/Challenge 5/Scripts/DifficultyButtonX.cs",
@@ -17,5 +25,13 @@
       "mustNotContain": ["OnMouseEnter"]
     }
   ],
-  "sceneChecks": []
+  "sceneChecks": [
+    {
+      "scene": "Assets/Challenge 5/Challenge 5.unity",
+      "contains": [
+        "m_Name: Time Text",
+        "timeText: {fileID:"
+      ]
+    }
+  ]
 }
