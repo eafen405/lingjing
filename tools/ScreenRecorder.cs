@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -89,10 +90,16 @@ public class ScreenRecorderAgent : MonoBehaviour
     private RenderTexture _target;
     private Texture2D _readback;
 
-    private string _driverObject = "";
-    private string _driverMethod = "";
-    private int _driverEvery = 0;
-    private int _driverIndex;
+    private readonly List<Driver> _drivers = new List<Driver>();
+
+    /// <summary>One scripted action: a method called on a game object.</summary>
+    private class Driver
+    {
+        public string GameObjectName;
+        public string MethodName;
+        public int EveryFrames;
+        public string Argument;
+    }
 
     private void Start()
     {
@@ -102,15 +109,28 @@ public class ScreenRecorderAgent : MonoBehaviour
         _height = SessionState.GetInt("ScreenRecorder.Height", 720);
 
         string driver = SessionState.GetString("ScreenRecorder.Driver", "");
-        string[] parts = driver.Split('|');
-        if (parts.Length >= 2)
+        foreach (string entry in driver.Split(';'))
         {
-            _driverObject = parts[0];
-            _driverMethod = parts[1];
+            if (string.IsNullOrEmpty(entry))
+            {
+                continue;
+            }
+
+            string[] parts = entry.Split('|');
+            var scripted = new Driver
+            {
+                GameObjectName = parts[0],
+                MethodName = parts.Length > 1 ? parts[1] : ""
+            };
             if (parts.Length > 2)
             {
-                int.TryParse(parts[2], out _driverEvery);
+                int.TryParse(parts[2], out scripted.EveryFrames);
             }
+            if (parts.Length > 3)
+            {
+                scripted.Argument = parts[3];
+            }
+            _drivers.Add(scripted);
         }
 
         if (!Directory.Exists(_output))
@@ -138,42 +158,92 @@ public class ScreenRecorderAgent : MonoBehaviour
         _readback = new Texture2D(_width, _height, TextureFormat.RGB24, false);
     }
 
-    /// <summary>Calls the method a key press would call, so the game is played.</summary>
+    /// <summary>Calls the methods a key press would call, so the game is played.</summary>
     private void DriveTheGame()
     {
-        if (_driverEvery <= 0 || _driverObject.Length == 0 || _driverMethod.Length == 0)
+        foreach (var driver in _drivers)
         {
-            return;
-        }
-
-        if (_captured % _driverEvery != 0)
-        {
-            return;
-        }
-
-        var target = GameObject.Find(_driverObject);
-        if (target == null)
-        {
-            return;
-        }
-
-        var components = target.GetComponents<MonoBehaviour>();
-        foreach (var component in components)
-        {
-            if (component == null)
+            if (driver.EveryFrames <= 0 || _captured % driver.EveryFrames != 0)
             {
                 continue;
             }
 
-            System.Reflection.MethodInfo method = component.GetType().GetMethod(_driverMethod);
-            if (method == null || method.GetParameters().Length != 0)
+            var target = GameObject.Find(driver.GameObjectName);
+            if (target == null)
             {
                 continue;
             }
 
-            method.Invoke(component, null);
-            return;
+            foreach (var component in target.GetComponents<MonoBehaviour>())
+            {
+                if (component == null)
+                {
+                    continue;
+                }
+
+                System.Reflection.MethodInfo method = component.GetType().GetMethod(driver.MethodName);
+                if (method == null)
+                {
+                    continue;
+                }
+
+                var parameters = method.GetParameters();
+                if (parameters.Length == 0)
+                {
+                    method.Invoke(component, null);
+                    break;
+                }
+                if (parameters.Length == 1 && TryBuildArgument(parameters[0].ParameterType, driver.Argument, out object argument))
+                {
+                    method.Invoke(component, new[] { argument });
+                    break;
+                }
+            }
         }
+    }
+
+    private static bool TryBuildArgument(System.Type type, string raw, out object argument)
+    {
+        argument = null;
+        if (raw == null)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (type == typeof(int))
+            {
+                argument = int.Parse(raw);
+                return true;
+            }
+            if (type == typeof(float))
+            {
+                argument = float.Parse(raw, System.Globalization.CultureInfo.InvariantCulture);
+                return true;
+            }
+            if (type == typeof(bool))
+            {
+                argument = bool.Parse(raw);
+                return true;
+            }
+            if (type == typeof(string))
+            {
+                argument = raw;
+                return true;
+            }
+            if (type == typeof(float?))
+            {
+                argument = float.Parse(raw, System.Globalization.CultureInfo.InvariantCulture);
+                return true;
+            }
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        return false;
     }
 
     private void OnDestroy()
