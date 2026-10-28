@@ -6,6 +6,10 @@ Phase 1 deliverable: a Unity project written in C#, packaged for hand-in, per
 
 ## Agent skills
 
+### Git workflow
+
+Issue 先行、分支开发、小步提交、PR 合并。完整约定见 `CONTRIBUTING.md`；摘要：每个工作项在 GitHub Issues 跟踪，分支命名 `feature/<issue-number>-<slug>`，提交信息用 Conventional Commits，**不重写已推送的历史**。
+
 ### Issue tracker
 
 GitHub Issues via the `gh` CLI. See `docs/agents/issue-tracker.md`.

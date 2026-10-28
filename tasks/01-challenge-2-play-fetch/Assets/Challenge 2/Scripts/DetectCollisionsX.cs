@@ -1,12 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class DetectCollisionsX : MonoBehaviour
 {
-
     private void OnTriggerEnter(Collider other)
     {
-        Destroy(gameObject);
+        // 只有真正碰到狗的时候才销毁球
+        if (other.CompareTag("Dog"))
+        {
+            Destroy(gameObject);
+        }
     }
 }
