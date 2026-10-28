@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -99,6 +100,7 @@ public static class Challenge2Probe
 
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         instance.transform.position = Vector3.zero;
+        Physics.SyncTransforms();
         Transform root = instance.transform;
 
         var renderers = instance.GetComponentsInChildren<Renderer>(true);
@@ -143,11 +145,53 @@ public static class Challenge2Probe
             }
         }
 
-        UnityEngine.Object.DestroyImmediate(instance);
-
         string detail = "collider " + colliderSize.ToString("F3", CultureInfo.InvariantCulture) +
                         " vs model " + modelSize.ToString("F3", CultureInfo.InvariantCulture);
-        return (ok ? "PASS" : "FAIL") + " " + detail;
+
+        // A ball that only comes near the dog must not overlap the dog's
+        // hitbox, otherwise the balls vanish when they merely approach it.
+        string nearDetail = "no ball prefab available";
+        bool nearOk = false;
+        var ballPrefab = GetBallPrefabAsset();
+        if (ballPrefab != null)
+        {
+            var ball = (GameObject)PrefabUtility.InstantiatePrefab(ballPrefab);
+            ball.transform.position = new Vector3(10f, 0f, 0f);
+            ball.transform.rotation = Quaternion.identity;
+            // Collider.bounds only reflects the new transforms after the
+            // physics scene has caught up.
+            Physics.SyncTransforms();
+            var ballCollider = ball.GetComponent<Collider>();
+            Bounds dogBounds = collider.bounds;
+            Bounds ballBounds = ballCollider != null ? ballCollider.bounds : new Bounds();
+            nearOk = ballCollider != null && !dogBounds.Intersects(ballBounds);
+            nearDetail = "dog hitbox " + dogBounds.ToString() + " vs ball at x=10 " + ballBounds.ToString() +
+                         (nearOk ? " (no overlap)" : " (OVERLAP)");
+            UnityEngine.Object.DestroyImmediate(ball);
+        }
+
+        UnityEngine.Object.DestroyImmediate(instance);
+
+        return (ok ? "PASS" : "FAIL") + " " + detail + " | " +
+               (nearOk ? "PASS" : "FAIL") + " dog-hitbox-misses-a-nearby-ball: " + nearDetail;
+    }
+
+    /// <summary>The first ball prefab the spawn manager uses, as an asset.</summary>
+    private static GameObject GetBallPrefabAsset()
+    {
+        var spawner = GameObject.Find("Spawn Manager");
+        if (spawner == null)
+        {
+            return null;
+        }
+
+        var manager = spawner.GetComponent<SpawnManagerX>();
+        if (manager == null || manager.ballPrefabs == null || manager.ballPrefabs.Length == 0)
+        {
+            return null;
+        }
+
+        return manager.ballPrefabs[0];
     }
 
     /// <summary>
@@ -219,13 +263,6 @@ public class Challenge2ProbeAgent : MonoBehaviour
     private bool _ballTouchedDog;
     private int _contactBallId = -1;
 
-    private bool _nearTestStarted;
-    private bool _nearTestFinished;
-    private bool _ballSurvivedNearby = true;
-    private int _nearBallId = -1;
-    private float _nearTestStart;
-    private float _nearBallLastY = float.NaN;
-
     private bool _groundTestStarted;
     private bool _groundTestFinished;
     private bool _ballRemovedAtBottom;
@@ -274,7 +311,6 @@ public class Challenge2ProbeAgent : MonoBehaviour
             EnsureDog();
             TestSpawnCooldown();
             RunContactTest();
-            RunNearbyTest();
             RunGroundTest();
         }
 
@@ -465,22 +501,6 @@ public class Challenge2ProbeAgent : MonoBehaviour
         return manager.ballPrefabs[0];
     }
 
-    private static float FindBallY(int instanceId)
-    {
-        if (instanceId < 0)
-        {
-            return float.NaN;
-        }
-        foreach (var ball in FindSceneBalls())
-        {
-            if (ball.gameObject.GetInstanceID() == instanceId)
-            {
-                return ball.transform.position.y;
-            }
-        }
-        return float.NaN;
-    }
-
     private static bool Exists(int instanceId)
     {
         if (instanceId < 0)
@@ -563,69 +583,6 @@ public class Challenge2ProbeAgent : MonoBehaviour
     }
 
     /// <summary>
-    /// Puts a ball just outside the dog's hitbox. It has to survive, otherwise
-    /// the collider is so big that the balls vanish when they merely come near
-    /// the dog.
-    /// </summary>
-    private void RunNearbyTest()
-    {
-        if (_nearTestFinished)
-        {
-            return;
-        }
-
-        if (!_nearTestStarted)
-        {
-            if (CountDogs() == 0)
-            {
-                return;
-            }
-
-            var prefab = GetBallPrefab();
-            if (prefab == null)
-            {
-                return;
-            }
-
-            var dog = GameObject.FindGameObjectWithTag("Dog");
-            if (dog == null)
-            {
-                return;
-            }
-
-            // The dog runs towards -X, so a ball to its right is never run into.
-            // It is dropped from a height so that it cannot reach the bottom of
-            // the play area before the observation window is over.
-            // Ten units to the right is outside the repaired hitbox (three units
-            // half width) but well inside the broken one (thirty nine units).
-            Vector3 position = dog.transform.position + new Vector3(10f, 4f, 0f);
-            var ball = Instantiate(prefab, position, prefab.transform.rotation);
-            // Hold the ball in the air: only a trigger with the dog may destroy
-            // it, not the bottom of the play area. The body stays dynamic so
-            // that trigger events are still generated.
-            var body = ball.GetComponent<Rigidbody>();
-            if (body != null)
-            {
-                body.constraints = RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezePositionZ;
-            }
-            _nearBallId = ball.GetInstanceID();
-            _testBalls.Add(_nearBallId);
-            _nearTestStart = Time.time;
-            _nearTestStarted = true;
-            return;
-        }
-
-        if (Time.time - _nearTestStart < 0.8f)
-        {
-            _nearBallLastY = FindBallY(_nearBallId);
-            return;
-        }
-
-        _ballSurvivedNearby = Exists(_nearBallId);
-        _nearTestFinished = true;
-    }
-
-    /// <summary>
     /// Drops a ball under the floor. It has to be destroyed and it has to
     /// report Game Over.
     /// </summary>
@@ -686,11 +643,12 @@ public class Challenge2ProbeAgent : MonoBehaviour
         _results.Add((_ballTypesSeen.Count >= 2 ? "PASS" : "FAIL") + " ball-type-random: saw " + _ballTypesSeen.Count + " different ball types");
         _results.Add((intervalsOk ? "PASS" : "FAIL") + " spawn-interval-random: intervals " + string.Join(", ", intervals.ConvertAll(v => v.ToString("F2", CultureInfo.InvariantCulture))));
         _results.Add((_ballTouchedDog ? "PASS" : "FAIL") + " ball-destroyed-on-contact: a ball dies when the dog touches it");
-        _results.Add((_ballSurvivedNearby ? "PASS" : "FAIL") + " ball-survives-nearby: a ball that only comes near the dog survives (last y " +
-                     _nearBallLastY.ToString("F2", CultureInfo.InvariantCulture) + ", game over logs " + _gameOverCount + ")");
         _results.Add((_ballRemovedAtBottom ? "PASS" : "FAIL") + " ball-destroyed-at-bottom: a ball that reached the ground is cleaned up");
         _results.Add((_gameOverLogged ? "PASS" : "FAIL") + " game-over-message: the round end is reported");
-        _results.Add(SessionState.GetString(Challenge2Probe.ColliderKey, "FAIL the dog collider was not checked"));
+        _results.AddRange(SessionState.GetString(Challenge2Probe.ColliderKey, "FAIL the dog collider was not checked")
+            .Split('|')
+            .Select(part => part.Trim())
+            .ToArray());
 
         int failed = 0;
         foreach (var result in _results)
