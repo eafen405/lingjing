@@ -139,6 +139,7 @@ public class Challenge4ProbeAgent : MonoBehaviour
     private bool _knockBackDone;
     private int _knockBackEnemyId = -1;
     private Vector3 _knockBackDirection;
+    private float _knockBackAlong;
     private float _knockBackStart;
 
     // step 3 - the powerup
@@ -364,14 +365,29 @@ public class Challenge4ProbeAgent : MonoBehaviour
 
             // Stop the enemy ball first, so the measurement only sees the
             // knock back and not the ball rolling towards the goal.
+            enemyRb.WakeUp();
             enemyRb.velocity = Vector3.zero;
             enemyRb.angularVelocity = Vector3.zero;
 
-            // The collider of the enemy ball sits above its origin, the player
-            // is placed next to it so that the two balls overlap.
-            Vector3 enemyPos = enemy.transform.position;
-            Vector3 place = new Vector3(enemyPos.x + 1.3f, enemyPos.y + 0.7377f, enemyPos.z);
-            playerRb.position = place;
+            // The player is placed next to the enemy ball, sideways to the
+            // direction the ball is rolling, so that the knock back cannot be
+            // confused with the roll. The collider of the enemy ball sits
+            // above its origin, so the player is raised as well. The rigidbody
+            // pose is used, because the transform of a rolling ball lags one
+            // physics step behind. The transform is moved too, because the
+            // knock back reads transform.position while the collision is
+            // reported.
+            var goal = GameObject.Find("Player Goal");
+            Vector3 enemyPos = enemyRb.position;
+            Vector3 roll = goal != null ? goal.transform.position - enemyPos : Vector3.forward;
+            roll.y = 0f;
+            roll = roll.sqrMagnitude > 0f ? roll.normalized : Vector3.forward;
+            Vector3 sideways = new Vector3(roll.z, 0f, -roll.x);
+
+            Vector3 place = enemyPos + new Vector3(0f, 0.7377f, 0f) + sideways * 0.9f;
+            playerRb.WakeUp();
+            player.transform.position = place;
+            Physics.SyncTransforms();
             playerRb.velocity = Vector3.zero;
             playerRb.angularVelocity = Vector3.zero;
 
@@ -391,22 +407,30 @@ public class Challenge4ProbeAgent : MonoBehaviour
             return;
         }
 
-        float along = Vector3.Dot(watched.GetComponent<Rigidbody>().velocity, _knockBackDirection);
-        if (along > 0.5f)
+        var watchedBody = watched.GetComponent<Rigidbody>();
+        float along = Vector3.Dot(watchedBody.velocity, _knockBackDirection);
+        if (along > _knockBackAlong)
+        {
+            _knockBackAlong = along;
+        }
+
+        if (Time.time - _knockBackStart < 1.5f)
+        {
+            return;
+        }
+
+        if (_knockBackAlong > 1f)
         {
             _knockBackDone = true;
             _results.Add("PASS knock-back: the enemy ball was pushed " +
-                         along.ToString("F2", CultureInfo.InvariantCulture) + " away from the player");
+                         _knockBackAlong.ToString("F2", CultureInfo.InvariantCulture) + " away from the player");
             _step = 3;
             return;
         }
 
-        if (Time.time - _knockBackStart > 1.5f)
-        {
-            _knockBackDone = true;
-            _results.Add("FAIL knock-back: the enemy ball was not pushed away from the player");
-            _step = 3;
-        }
+        _knockBackDone = true;
+        _results.Add("FAIL knock-back: the enemy ball was not pushed away from the player");
+        _step = 3;
     }
 
     // ------------------------------------------------------------- powerup ---
@@ -455,6 +479,7 @@ public class Challenge4ProbeAgent : MonoBehaviour
                 return;
             }
 
+            playerRb.WakeUp();
             playerRb.position = powerup.transform.position;
             playerRb.velocity = Vector3.zero;
             return;
@@ -619,6 +644,7 @@ public class Challenge4ProbeAgent : MonoBehaviour
         {
             // Start from a standstill, so the boost is the only thing that
             // moves the player.
+            playerRb.WakeUp();
             playerRb.velocity = Vector3.zero;
             controller.Dash();
             _dashPending = true;
