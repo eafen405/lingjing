@@ -4,8 +4,13 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Reports the real world-space size of a prefab's renderers and colliders so
-/// colliders can be sized to the model instead of guessed.
+/// Reports the real size of a prefab's renderers and colliders so colliders can
+/// be sized to the model instead of guessed.
+///
+/// The model bounds are reported in the prefab root's LOCAL space, because a
+/// BoxCollider on the root is expressed in that same space. The world space
+/// numbers alone are misleading here: the dog prefab root is rotated -90 degrees
+/// on Y, so its local X axis points along world -X.
 ///
 /// Run head-less, passing the prefab path after "--":
 ///   Unity.exe -batchmode -quit -nographics -projectPath &lt;project&gt; \
@@ -35,8 +40,9 @@ public static class MeasureTools
         }
 
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        // Keep the prefab's own rotation and scale, only move it to the origin.
         instance.transform.position = Vector3.zero;
-        instance.transform.rotation = Quaternion.identity;
+        Transform root = instance.transform;
 
         var renderers = instance.GetComponentsInChildren<Renderer>(true);
         bool first = true;
@@ -54,19 +60,46 @@ public static class MeasureTools
             }
         }
 
-        Debug.Log($"MEASURE {path} renderers={renderers.Length} boundsSize={bounds.size} boundsCenter={bounds.center}");
-        Debug.Log($"MEASURE {path} rootScale={instance.transform.lossyScale}");
+        Debug.Log($"MEASURE {path} renderers={renderers.Length} worldBoundsSize={bounds.size} worldBoundsCenter={bounds.center}");
+        Debug.Log($"MEASURE {path} rootScale={root.lossyScale} rootEuler={root.localEulerAngles}");
+
+        // Convert the world space bounds into the root's local space. The corners
+        // are transformed one by one because the root is rotated, so a plain
+        // centre/extents conversion would give a wrong local box.
+        Vector3 localMin = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+        Vector3 localMax = new Vector3(float.MinValue, float.MinValue, float.MinValue);
+        foreach (var renderer in renderers)
+        {
+            Bounds r = renderer.bounds;
+            Vector3 c = r.center;
+            Vector3 e = r.extents;
+            for (int xi = -1; xi <= 1; xi += 2)
+            {
+                for (int yi = -1; yi <= 1; yi += 2)
+                {
+                    for (int zi = -1; zi <= 1; zi += 2)
+                    {
+                        Vector3 corner = root.InverseTransformPoint(c + Vector3.Scale(e, new Vector3(xi, yi, zi)));
+                        localMin = Vector3.Min(localMin, corner);
+                        localMax = Vector3.Max(localMax, corner);
+                    }
+                }
+            }
+        }
+        Vector3 localSize = localMax - localMin;
+        Vector3 localCenter = (localMin + localMax) * 0.5f;
+        Debug.Log($"MEASURE {path} LOCAL model size={localSize} center={localCenter}");
 
         foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
         {
             string detail;
             if (collider is BoxCollider box)
             {
-                detail = $"box size={box.size} center={box.center} worldSize={Vector3.Scale(box.size, instance.transform.lossyScale)}";
+                detail = $"box LOCAL size={box.size} center={box.center} worldSize={Vector3.Scale(box.size, root.lossyScale)}";
             }
             else if (collider is SphereCollider sphere)
             {
-                detail = $"sphere r={sphere.radius} worldR={sphere.radius * instance.transform.lossyScale.x}";
+                detail = $"sphere r={sphere.radius} worldR={sphere.radius * root.lossyScale.x}";
             }
             else
             {
@@ -75,7 +108,12 @@ public static class MeasureTools
             Debug.Log($"MEASURE {path} collider on '{collider.name}' trigger={collider.isTrigger} {detail}");
         }
 
-        Object.DestroyImmediate(instance);
+        if (renderers.Length > 0)
+        {
+            Debug.Log($"MEASURE {path} SUGGESTED BoxCollider size={localSize} center={localCenter}");
+        }
+
+        UnityEngine.Object.DestroyImmediate(instance);
         EditorApplication.Exit(0);
     }
 
