@@ -269,6 +269,16 @@ public class ScreenRecorderAgent : MonoBehaviour
 
         DriveTheGame();
 
+        // The camera is looked up again every frame: a scene change (the game
+        // loads the play scene from the menu) destroys the old one.
+        Camera camera = Camera.main != null ? Camera.main : _camera;
+        if (camera == null)
+        {
+            EditorApplication.Exit(1);
+            return;
+        }
+        _camera = camera;
+
         var previous = RenderTexture.active;
         var previousTarget = _camera.targetTexture;
         _camera.targetTexture = _target;
