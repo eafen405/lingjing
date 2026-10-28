@@ -55,6 +55,8 @@ public class PlayerControllerX : MonoBehaviour
     // kicks off the smoke effect underneath it.
     public void Dash()
     {
+        // A sleeping player would ignore the impulse, so wake it up first.
+        playerRb.WakeUp();
         playerRb.AddForce(focalPoint.transform.forward * dashStrength, ForceMode.Impulse);
 
         if (dashParticleEffect != null)

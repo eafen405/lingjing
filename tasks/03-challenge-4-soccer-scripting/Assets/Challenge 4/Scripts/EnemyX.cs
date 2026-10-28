@@ -23,6 +23,9 @@ public class EnemyX : MonoBehaviour
     {
         // Set enemy direction towards player goal and move there
         Vector3 lookDirection = (playerGoal.transform.position - transform.position).normalized;
+
+        // A sleeping ball would ignore the force, so wake it up first.
+        enemyRb.WakeUp();
         enemyRb.AddForce(lookDirection * speed * Time.fixedDeltaTime);
 
     }
